@@ -2,16 +2,16 @@ import enum
 
 
 class Command(enum.Enum):  # TODO remove the C_ prefix :p
-    C_ARITHMETIC = 1
-    C_PUSH = 2
-    C_POP = 3
-    C_LABEL = 4
-    C_GOTO = 5
-    C_IF = 6
-    C_FUNCTION = 7
-    C_RETURN = 8
-    C_CALL = 9
-    C_IF_GOTO = 10
+    ARITHMETIC = 1
+    PUSH = 2
+    POP = 3
+    LABEL = 4
+    GOTO = 5
+    IF = 6
+    FUNCTION = 7
+    RETURN = 8
+    CALL = 9
+    IF_GOTO = 10
 
 
 class Parser:
@@ -92,19 +92,19 @@ class Parser:
         arithmetic = ['add', 'sub', 'neg', 'eq', 'gt', 'lt', 'and', 'or', 'not']
 
         if command_name in arithmetic:
-            return Command.C_ARITHMETIC
+            return Command.ARITHMETIC
 
         if command_name == 'pop':
-            return Command.C_POP
+            return Command.POP
 
         if command_name == 'push':
-            return Command.C_PUSH
+            return Command.PUSH
 
         if command_name == 'label':
-            return Command.C_LABEL
+            return Command.LABEL
 
         if command_name == 'if-goto':
-            return Command.C_IF_GOTO
+            return Command.IF_GOTO
 
         raise ValueError(f'VM command not recognized: {self.command()}')
 

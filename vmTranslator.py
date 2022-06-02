@@ -39,21 +39,23 @@ def main(filename: str) -> None:
 
         # process each command: is it writeArithmetic or writePushPop?
         match parser.commandType():
-            case Command.C_PUSH | Command.C_POP:
+            case Command.PUSH | Command.POP:
                 writer.writePushPop(
                     command,
                     parser.arg1(),
                     int(parser.arg2())
                 )
 
-            case Command.C_ARITHMETIC:
+            case Command.ARITHMETIC:
                 writer.writeArithmetic(command)
 
-            case Command.C_LABEL:
+            # case Command.C_LABEL | Command.C_IF_GOTO | Command.C_GOTO
+
+            case Command.LABEL:
                 writer.writelines(writer.writeLabel(command, parser.arg1()))
                 print(command)
 
-            case Command.C_IF_GOTO:
+            case Command.IF_GOTO:
                 writer.writelines(writer.writeIfGoto(command, parser.arg1()))
                 print(command)
 
