@@ -33,8 +33,8 @@ class CodeWriter:
             '@SP',
             'AM=M-1',       # select *[SP-1]
             'D=M',
-            f'(@{label})',
-            'D; JNE'        # we just if *[SP-1] is true
+            f'({label})',   # TODO add function name once we have multiple files
+            'D;JNE'        # we just if *[SP-1] is true
                             # note that 0 is false TODO ask cody
         ]
 

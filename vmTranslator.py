@@ -28,7 +28,8 @@ from parser import Parser, Command
 
 def main(filename: str) -> None:
     parser = Parser(filename)
-    writer = CodeWriter('output.asm')
+    writer = CodeWriter('C:/Dropbox/code/nand2tetris/kiwi/nand2tetris'
+                        '/projects/08/ProgramFlow/BasicLoop/BasicLoop.asm')
     results = []
 
     while parser.hasMoreCommands():
