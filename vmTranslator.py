@@ -29,7 +29,8 @@ from parser import Parser, Command
 def main(filename: str) -> None:
     parser = Parser(filename)
     writer = CodeWriter('C:/Dropbox/code/nand2tetris/kiwi/nand2tetris'
-                        '/projects/08/ProgramFlow/BasicLoop/BasicLoop.asm')
+                        '/projects/08/ProgramFlow/FibonacciSeries'
+                        '/FibonacciSeries.asm')
     results = []
 
     while parser.hasMoreCommands():
@@ -54,10 +55,12 @@ def main(filename: str) -> None:
 
             case Command.LABEL:
                 writer.writelines(writer.writeLabel(command, parser.arg1()))
-                print(command)
 
             case Command.IF_GOTO:
-                writer.writelines(writer.writeIfGoto(command, parser.arg1()))
+                writer.writelines(writer.writeIfGotoLabel(command, parser.arg1()))
+
+            case Command.GOTO:
+                writer.writelines(writer.writeGotoLabel(command, parser.arg1()))
                 print(command)
 
             case _:
@@ -70,7 +73,7 @@ def main(filename: str) -> None:
 # main('vm/StaticTest.vm')
 # main('vm/PointerTest.vm')
 # main('vm/BasicTest.vm')
-main('BasicLoop.vm')
+main('FibonacciSeries.vm')
 
 
 ''' 

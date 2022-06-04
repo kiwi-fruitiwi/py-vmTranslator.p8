@@ -27,15 +27,22 @@ class CodeWriter:
         ]
 
     # noinspection PyMethodMayBeStatic
-    def writeIfGoto(self, command: str, label: str) -> [str]:
+    def writeGotoLabel(self, command: str, label: str) -> [str]:
+        return [
+            '// [ VM COMMAND ] ' + command,
+            f'@{label}',
+            '0;JMP'         # unconditional jump to specified label
+        ]
+
+    # noinspection PyMethodMayBeStatic
+    def writeIfGotoLabel(self, command: str, label: str) -> [str]:
         return [  # hackAssembler handles labels on its 1st pass
             '// [ VM COMMAND ] ' + command,
             '@SP',
             'AM=M-1',       # select *[SP-1]
             'D=M',
-            f'({label})',   # TODO add function name once we have multiple files
-            'D;JNE'        # we just if *[SP-1] is true
-                            # note that 0 is false TODO ask cody
+            f'@{label}',   # TODO add function name once we have multiple files
+            'D;JNE'        # we just if *[SP-1] is true; note 0 is false
         ]
 
     # writes to output file the asm commands that implement the vm command given

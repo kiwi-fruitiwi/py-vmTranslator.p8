@@ -106,6 +106,9 @@ class Parser:
         if command_name == 'if-goto':
             return Command.IF_GOTO
 
+        if command_name == 'goto':
+            return Command.GOTO
+
         raise ValueError(f'VM command not recognized: {self.command()}')
 
 
