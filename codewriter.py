@@ -9,6 +9,41 @@ class EqualityType(enum.Enum):
     GT = 3
 
 
+"""
+lecture notes
+return
+    keep track of last function name n
+    loop to pop n values off the caller's stack
+    replace with callee's stack[0]
+    → pseudocode
+        endFrame = LCL
+        retAddr = *(eF-5)
+        *ARG = pop() ← put return value into arg0. part of our contract
+        SP = ARG+1
+        LCL = *(eF-4)
+        ARG = *(eF-3)
+        THIS = *(eF-2)
+        THAT = *(eF-1)
+        goto retAddr
+
+function → always follows call
+    (functionName)
+    repeat 'push 0' nVars times
+    
+call
+    push retAddr
+    push LCL
+    push ARG
+    push THIS
+    push THAT
+    ARG = SP - 5 - nArgs
+    LCL = SP
+    goto functionName
+    (retAddr) ← set label for goto later :3 how to name this? 
+        fileName.functionName?    
+"""
+
+
 class CodeWriter:
     """
     invoked with a VM command, .e.g 'push static 5' or 'add', to return a
