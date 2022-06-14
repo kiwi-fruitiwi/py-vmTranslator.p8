@@ -29,8 +29,9 @@ from parser import Parser, Command
 def main(filename: str) -> None:
     parser = Parser(filename)
     writer = CodeWriter('C:/Dropbox/code/nand2tetris/kiwi/nand2tetris'
-                        '/projects/08/ProgramFlow/FibonacciSeries'
-                        '/FibonacciSeries.asm')
+                        '/projects/08/FunctionCalls/SimpleFunction'
+                        '/SimpleFunction.asm')
+
     results = []
 
     while parser.hasMoreCommands():
@@ -52,6 +53,10 @@ def main(filename: str) -> None:
                 writer.writeArithmetic(command)
 
             # case Command.C_LABEL | Command.C_IF_GOTO | Command.C_GOTO
+            # currently writelines(lines) outputs to file
+            #   but writeArithmetic and writePushPop do this inside
+            #   themselves instead of returning the list of asm commands.
+            #   todo → make this more consistent
 
             case Command.LABEL:
                 writer.writelines(writer.writeLabel(command, parser.arg1()))
@@ -63,6 +68,15 @@ def main(filename: str) -> None:
                 writer.writelines(writer.writeGotoLabel(command, parser.arg1()))
                 print(command)
 
+            case Command.CALL:
+                print(f'call command: {command}')
+
+            case Command.FUNCTION:
+                print(f'function command: {command}')
+
+            case Command.RETURN:
+                print(f'return command: {command}')
+
             case _:
                 print(f'[ ERROR ] command not matched!')
 
@@ -73,7 +87,7 @@ def main(filename: str) -> None:
 # main('vm/StaticTest.vm')
 # main('vm/PointerTest.vm')
 # main('vm/BasicTest.vm')
-main('FibonacciSeries.vm')
+main('vm/SimpleFunction.vm')
 
 
 ''' 

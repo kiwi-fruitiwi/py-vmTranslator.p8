@@ -109,6 +109,15 @@ class Parser:
         if command_name == 'goto':
             return Command.GOTO
 
+        if command_name == 'call':
+            return Command.CALL
+
+        if command_name == 'function':
+            return Command.FUNCTION
+
+        if command_name == 'return':
+            return Command.RETURN
+
         raise ValueError(f'VM command not recognized: {self.command()}')
 
 
