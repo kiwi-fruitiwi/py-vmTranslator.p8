@@ -27,8 +27,30 @@ return
         goto retAddr
 
 function → always follows call
+follows form: function factorial(nVars) ← local variables
+    → extract the n and functionName using () and parser.arg1
+        print this out to confirm
+    → create label, then loop to push 0
+        f'({functionName})'  # label        
+        
+        repeat between 1 and n times: if n=0, do it once
+            @SP
+            A=M     # select value at SP
+            M=0     # set top of stack to 0
+            @SP     # increment SP
+            M=M+1
+                  
+        this is my pushConstant code
+            'D=A',  # load value of i into register D
+            '@SP',
+            'A=M',
+
+            'M=D',
+            '@SP',
+            'M=M+1'
+    
     (functionName)
-    repeat 'push 0' nVars times
+    repeat 'push 0' nVars times, but always push one if nVars is 0
     
 call
     push retAddr
@@ -53,6 +75,24 @@ class CodeWriter:
     def __init__(self, filename):
         self.output = open(filename, 'w')
         self.equalityCounter = 0
+
+    # noinspection PyMethodMayBeStatic
+    def writeCall(self, command: str) -> [str]:
+        return [
+            '// [ VM COMMAND ] ' + command,
+        ]
+
+    # noinspection PyMethodMayBeStatic
+    def writeReturn(self, command: str) -> [str]:
+        return [
+            '// [ VM COMMAND ] ' + command,
+        ]
+
+    # noinspection PyMethodMayBeStatic
+    def writeFunction(self, command: str) -> [str]:
+        return [
+            '// [ VM COMMAND ] ' + command,
+        ]
 
     # noinspection PyMethodMayBeStatic
     def writeLabel(self, command: str, label: str) -> [str]:
@@ -401,7 +441,7 @@ class CodeWriter:
             # 'Foo' is arbitrary, suggested to be the filename. but I'll choose
             # kiwi :p
             '// [ VM COMMAND ] ' + command,
-            f'@Kiwi.{str(n)}',
+            f'@Kiwi.{str(n)}',  # TODO @Kiwi needs to be filename
             'D=M',  # @Foo.5 stored into register D
 
             '@SP',
