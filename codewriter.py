@@ -26,31 +26,10 @@ return
         THAT = *(eF-1)
         goto retAddr
 
-function → always follows call
-follows form: function factorial(nVars) ← local variables
-    → extract the n and functionName using () and parser.arg1
-        print this out to confirm
-    → create label, then loop to push 0
-        f'({functionName})'  # label        
-        
-        repeat between 1 and n times: if n=0, do it once
-            @SP
-            A=M     # select value at SP
-            M=0     # set top of stack to 0
-            @SP     # increment SP
-            M=M+1
-                  
-        this is my pushConstant code
-            'D=A',  # load value of i into register D
-            '@SP',
-            'A=M',
-
-            'M=D',
-            '@SP',
-            'M=M+1'
-    
+function: always follows call, in the form of function factorial(nVars)
+    nVars specifies number of local variables
     (functionName)
-    repeat 'push 0' nVars times, but always push one if nVars is 0
+    repeat 'push 0' nVars times
     
 call
     push retAddr
@@ -78,6 +57,11 @@ class CodeWriter:
 
     # noinspection PyMethodMayBeStatic
     def writeCall(self, command: str) -> [str]:
+        """
+
+        :param command:
+        :return:
+        """
         return [
             '// [ VM COMMAND ] ' + command,
         ]
@@ -89,10 +73,59 @@ class CodeWriter:
         ]
 
     # noinspection PyMethodMayBeStatic
-    def writeFunction(self, command: str) -> [str]:
-        return [
-            '// [ VM COMMAND ] ' + command,
+    def writeFunction(self, command: str, fName: str, nVars: int) -> [str]:
+        """
+        always follows call
+        → (functionName)
+        → repeat 'push 0' nVars times, but always push one if nVars is 0
+
+        follows form: function factorial(nVars) ← local variables
+            → extract the n and functionName using () and parser.arg1
+                print this out to confirm
+            → create label, then loop to push 0
+                f'({functionName})'  # label
+
+                repeat between 1 and n times: if n=0, do it once
+                    @SP
+                    A=M     # select value at SP
+                    M=0     # set top of stack to 0
+                    @SP     # increment SP
+                    M=M+1
+        :param command: a string like 'function factorial(nVars)'
+        :param nVars: the nVars part of 'function factorial(nVars)'
+        :param fName: the factorial part of 'function factorial(nVars)'
+        :return: a list of assembly commands
+        """
+
+        loopCode: [str] = [  # executes 'push 0' once
+            '@SP',
+            'A=M',  # select as memory location: value at SP
+            'M=0',  # set top of stack to 0
+            '@SP',  # increment SP
+            'M=M+1'
         ]
+
+        loops: int  # how many times are we executing 'push 0'?
+        nVars = int(nVars)
+
+        if nVars < 0:
+            raise ValueError(f'nVars < 0 in: {command}')
+        elif nVars == 0:
+            # even if nVars is 0, we need 'argument 0' to be available to push
+            # the return value of our function to
+            loops = 1
+        else:
+            loops = nVars
+
+        result: [str] = [
+            '// [ VM COMMAND ] ' + command,
+            f'({fName})'
+        ]
+
+        for index in range(loops):
+            result.extend(loopCode)
+
+        return result
 
     # noinspection PyMethodMayBeStatic
     def writeLabel(self, command: str, label: str) -> [str]:

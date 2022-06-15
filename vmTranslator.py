@@ -72,6 +72,10 @@ def main(filename: str) -> None:
                 print(f'call command: {command}')
 
             case Command.FUNCTION:
+                writer.writelines(
+                    writer.writeFunction(command, parser.arg1(), parser.arg2())
+                )
+
                 print(f'function command: {command}')
 
             case Command.RETURN:
