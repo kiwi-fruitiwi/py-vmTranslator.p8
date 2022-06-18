@@ -68,8 +68,105 @@ class CodeWriter:
 
     # noinspection PyMethodMayBeStatic
     def writeReturn(self, command: str) -> [str]:
+        """
+        pseudocode
+            endFrame = LCL
+            *ARG = pop()
+            SP = ARG+1
+            THAT = *(endFrame-1)
+            THIS = *(endFrame-2)
+            ARG = *(endFrame-3)
+            LCL = *(endFrame-4)
+            retAddr = *(endFrame-5)
+            goto retAddr
+        :param command:
+        :return:
+
+        Recall that RAM[0-4] are: SP, LCL, ARG, THIS, THAT, so LCL is RAM[1]
+        → LCL = *(endFrame-4)
+            @endFrame
+            D=M
+            @4              # calculate endFrame-4 and put it into D
+            D=D-A
+            A=D             # select memory at address endFrame-4
+            D=M
+            @LCL            # store *(endFrame-4) → LCL
+            M=D
+
+        → cody suggests we decrement endFrame a few times and set it to memsegs
+        → this method mutates endFrame by decrementing it each assignment
+            we use this mutation to assign THAT, THIS, ARG, LCL
+        → start with endFrame-1
+                LCL = *(endFrame-4)
+                ARG = *(endFrame-3)
+                THIS = *(endFrame-2)
+                THAT = *(endFrame-1)
+
+        # → retAddr = *(endFrame-5)
+            '@endFrame',    # calculate endFrame-5
+            'D=M',
+            '@5',
+            'D=D-A',        # endFrame-5 → register D
+            'A=D',          # select address in D
+            'D=M',          # D = *(endFrame-5)
+            '@retAddr',
+            'M=D',          # set retAddr variable to *(endFrame-5)
+        """
         return [
             '// [ VM COMMAND ] ' + command,
+
+            # → endFrame = LCL
+            '@LCL',         # this is @1
+            'D=M',          # M is the value of RAM[1], address where LCL begins
+            '@endFrame',    # initialize endFrame variable, used by assembler
+            'M=D',          # now endFrame's value is location LCL points to
+
+            # → *ARG = pop()    # puts return value into segment argument 0
+            '@SP',
+            'AM=M-1',       # select RAM[SP-1], decrement SP
+            'D=M',          # RAM[SP-1] → register D
+            '@ARG',         # find ARG; it's @2!
+            'A=M',
+            'M=D',          # stuff RAM[SP-1] into RAM[ARG]
+
+            # → SP = ARG+1  # set the stack pointer to just ahead of caller's
+                            # working stack
+            '@ARG',         # this is where ARG resides in RAM
+            'D=M+1',
+            '@SP',          # set SP to ARG+1
+            'M=D',
+
+            # endFrame minus 1-4 memory segment restoration
+            '@endFrame',
+            'AM=M-1',       # select address: endFrame-1. note endFrame has
+                            # been permanently decremented because M=M-1
+            'D=M',          # *(endFrame-1) → D
+            '@THAT',
+            'M=D',          # set *(endFrame-1) to THAT
+
+            '@endFrame',    # set *(endFrame-2) to THIS
+            'AM=M-1',
+            'D=M',
+            '@THIS',
+            'M=D',
+
+            '@endFrame',    # set *(endFrame-3) to ARG
+            'AM=M-1',
+            'D=M',
+            '@ARG',
+            'M=D',
+
+            '@endFrame',    # set *(endFrame-4) to LCL
+            'AM=M-1',
+            'D=M',
+            '@LCL',
+            'M=D',
+
+            # → goto retAddr, conveniently *(endFrame-5)
+            '@endFrame',
+            'AM=M-1',
+            'A=M',
+            '0;JMP'
         ]
 
     # noinspection PyMethodMayBeStatic

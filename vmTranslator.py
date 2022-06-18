@@ -80,6 +80,9 @@ def main(filename: str) -> None:
 
             case Command.RETURN:
                 print(f'return command: {command}')
+                writer.writelines(
+                    writer.writeReturn(command)
+                )
 
             case _:
                 print(f'[ ERROR ] command not matched!')
