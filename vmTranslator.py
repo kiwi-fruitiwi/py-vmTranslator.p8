@@ -29,8 +29,8 @@ from parser import Parser, Command
 def main(filename: str) -> None:
     parser = Parser(filename)
     writer = CodeWriter('C:/Dropbox/code/nand2tetris/kiwi/nand2tetris'
-                        '/projects/08/FunctionCalls/SimpleFunction'
-                        '/SimpleFunction.asm')
+                        '/projects/08/FunctionCalls/NestedCall'
+                        '/sys.asm')
 
     results = []
 
@@ -86,7 +86,8 @@ def main(filename: str) -> None:
 
             case Command.CALL:
                 print(f'call command {command}')
-                writer.writelines(writer.writeCall(command))
+                writer.writelines(
+                    writer.writeCall(command, parser.arg1(), parser.arg2()))
 
             case _:
                 print(f'[ ERROR ] command not matched!')
@@ -98,7 +99,7 @@ def main(filename: str) -> None:
 # main('vm/StaticTest.vm')
 # main('vm/PointerTest.vm')
 # main('vm/BasicTest.vm')
-main('vm/SimpleFunction.vm')
+main('vm/sys.vm')
 
 
 ''' 

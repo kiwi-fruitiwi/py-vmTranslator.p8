@@ -54,10 +54,13 @@ class CodeWriter:
     def __init__(self, filename):
         self.output = open(filename, 'w')
         self.equalityCounter = 0
+        self.retAddrCounter = 0
 
     # noinspection PyMethodMayBeStatic
-    def writeCall(self, command: str) -> [str]:
+    def writeCall(self, command: str, functionName: str, nArgs: int) -> [str]:
         """
+        examples: call Sys.add12 1, function Sys.init 0
+
         pseudocode
             push retAddr
             push LCL
@@ -70,9 +73,65 @@ class CodeWriter:
             (retAddr) ← set label for goto later :3 how to name this?
                 fileName.functionName?
 
-        :param command:
-        :return:
+        self.retAddrCounter += 1
+        → push retAddr: we need a global retAddr counter →📇
+            f'@retAddr_{retAddrCounter}'
+            D=A     # value of retAddr_n → register D
+            @SP
+            A=M
+            M=D     # pushes retAddr_n onto the stack
+            @SP     # increment SP to complete push
+            M=M+1
+
+        → push LCL, ARG, THIS, THAT
+            memSegs = ['LCL', 'ARG', 'THIS', 'THAT']
+            memSegPushCode = [
+                D=M     # value of memSeg's location → register D
+                @SP
+                A=M
+                M=D     # *(SP) = memSeg's location
+                @SP     # increment SP
+                M=M+1
+            ]
+
+            loop from 0-3:
+            @memSegs[0-3]
+            results.extend(memSegPushCode)
+
+        → also consider memSegPushDRegister = results.extend [
+                @SP
+                A=M
+                M=D     # *(SP) = memSeg's location
+                @SP     # increment SP
+                M=M+1
+            ]
+
+        → ARG = SP - 5 - nArgs
+            argOffset = 5+nArgs
+            @SP
+            D=M
+            f'@{argOffset}'
+            D=D-A       # D ← SP-5-nArgs
+
+            @ARG
+            M=D
+
+        → LCL = SP
+            @LCL
+            D=M
+            @SP
+            M=D
+
+        → goto functionName
+            f'({functionName})'
+            0;JMP
+
+        → (retAddr)
+            f'(retAddr_{retAddrCounter}'
+
         """
+
+        self.retAddrCounter += 1
         return [
             '// [ VM COMMAND ] ' + command,
         ]
@@ -373,7 +432,6 @@ class CodeWriter:
         # check equality of top to elements of the stack
         #   if they are equal, set *(SP-2) to true, SP++
         #   if they aren't, set *(SP-2) to false, SP++
-        #
 
         # below, when SP-1 or SP-2 are mentioned, they refer to the top and 2nd
         # values of the stack, where SP-1 is the top
