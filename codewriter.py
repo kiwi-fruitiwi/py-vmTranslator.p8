@@ -58,6 +58,17 @@ class CodeWriter:
     # noinspection PyMethodMayBeStatic
     def writeCall(self, command: str) -> [str]:
         """
+        pseudocode
+            push retAddr
+            push LCL
+            push ARG
+            push THIS
+            push THAT
+            ARG = SP - 5 - nArgs
+            LCL = SP
+            goto functionName
+            (retAddr) ← set label for goto later :3 how to name this?
+                fileName.functionName?
 
         :param command:
         :return:

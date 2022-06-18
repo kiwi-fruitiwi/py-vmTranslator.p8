@@ -84,6 +84,10 @@ def main(filename: str) -> None:
                     writer.writeReturn(command)
                 )
 
+            case Command.CALL:
+                print(f'call command {command}')
+                writer.writelines(writer.writeCall(command))
+
             case _:
                 print(f'[ ERROR ] command not matched!')
 
