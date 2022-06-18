@@ -73,6 +73,10 @@ class CodeWriter:
             (retAddr) ← set label for goto later :3 how to name this?
                 fileName.functionName?
 
+        if nArgs == 0: # save a spot for argument 0: return address location
+            @SP
+            M=M+1
+
         self.retAddrCounter += 1
         → push retAddr: we need a global retAddr counter →📇
             f'@retAddr_{retAddrCounter}'
@@ -107,7 +111,11 @@ class CodeWriter:
             ]
 
         → ARG = SP - 5 - nArgs
-            argOffset = 5+nArgs
+            @ there always needs to be one argument slot for the return value
+            if nArgs == 0:
+                argOffset = 5+1
+            else:
+                argOffset = 5+nArgs
             @SP
             D=M
             f'@{argOffset}'
@@ -115,6 +123,8 @@ class CodeWriter:
 
             @ARG
             M=D
+
+        🐳
 
         → LCL = SP
             @LCL
@@ -129,12 +139,65 @@ class CodeWriter:
         → (retAddr)
             f'(retAddr_{retAddrCounter}'
 
+
+            if nArgs == 0: # save a spot for argument 0: return address location
+            @SP
+            M=M+1
+
         """
 
-        self.retAddrCounter += 1
-        return [
-            '// [ VM COMMAND ] ' + command,
+        # our code consists of several parts:
+        #   save frame: push retAddr, LCL, ARG, THIS, THAT
+        #       check if we need to make space for argument 0 if nArgs is 0
+        #   set new ARG=SP-5-nArgs
+        #   set new LCL=SP
+        #   goto functionName
+        #   set returnAddress label
+
+        self.retAddrCounter += 1  # unique return address ID for every call
+        result: [str] = []  # initialize empty list of asm code
+        header: [str] = ['// [ VM COMMAND ] ' + command]
+
+        zeroNArgs: bool = (nArgs == 0)
+        nArgsCheck: [str] = []
+
+        # if nArgs is zero, we have to make space for the return value in arg0
+        if zeroNArgs:
+            nArgsCheck = [
+                '@SP',
+                'M=M+1'
+            ]
+
+        # save returnAddress, LCL, ARG, THIS, THAT
+        saveFrameMemSegs = ['LCL', 'ARG', 'THIS', 'THAT']
+        pushDRegister: [str] = [
+            '@SP',
+            'A=M',
+            'M=D',
+            '@SP',
+            'M=M+1'
         ]
+        pushRetAddr: [str] = [f'@retAddr_{self.retAddrCounter}', 'D=A']
+        pushRetAddr.extend(pushDRegister)
+
+        saveFrame: [str] = []
+        saveFrame.extend(pushRetAddr)
+
+        for index in range(4):
+            saveFrame.extend([f'@{saveFrameMemSegs[index]}', 'D=M'] )
+            saveFrame.extend(pushDRegister)
+
+        setArg: [str] = []  # set ARG = SP-5-nArgs. if nArgs=0, SP-6
+        setLcl: [str] = []  # set LCL = SP
+        end: [str] = []  # goto functionName, set returnAddress label
+
+        result.extend(header)
+        result.extend(nArgsCheck)
+        result.extend(saveFrame)
+        result.extend(setArg)
+        result.extend(setLcl)
+        result.extend(end)
+        return result
 
     # noinspection PyMethodMayBeStatic
     def writeReturn(self, command: str) -> [str]:

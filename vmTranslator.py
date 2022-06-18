@@ -68,9 +68,6 @@ def main(filename: str) -> None:
                 writer.writelines(writer.writeGotoLabel(command, parser.arg1()))
                 print(command)
 
-            case Command.CALL:
-                print(f'call command: {command}')
-
             case Command.FUNCTION:
                 writer.writelines(
                     writer.writeFunction(command, parser.arg1(), parser.arg2())
