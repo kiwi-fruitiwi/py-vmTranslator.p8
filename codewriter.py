@@ -57,7 +57,7 @@ class CodeWriter:
         self.retAddrCounter = 0
 
     # noinspection PyMethodMayBeStatic
-    def writeCall(self, command: str, functionName: str, nArgs: int) -> [str]:
+    def writeCall(self, command: str, fName: str, nArgs: int) -> [str]:
         """
         examples: call Sys.add12 1, function Sys.init 0
 
@@ -124,8 +124,6 @@ class CodeWriter:
             @ARG
             M=D
 
-        🐳
-
         → LCL = SP
             @LCL
             D=M
@@ -137,7 +135,7 @@ class CodeWriter:
             0;JMP
 
         → (retAddr)
-            f'(retAddr_{retAddrCounter}'
+            f'(retAddr_{retAddrCounter})'
 
 
             if nArgs == 0: # save a spot for argument 0: return address location
@@ -158,7 +156,8 @@ class CodeWriter:
         result: [str] = []  # initialize empty list of asm code
         header: [str] = ['// [ VM COMMAND ] ' + command]
 
-        zeroNArgs: bool = (nArgs == 0)
+        zeroNArgs: bool = (int(nArgs) == 0)
+        print(f'zeroNArgs→{nArgs}, {zeroNArgs}')
         nArgsCheck: [str] = []
 
         # if nArgs is zero, we have to make space for the return value in arg0
@@ -168,7 +167,7 @@ class CodeWriter:
                 'M=M+1'
             ]
 
-        # save returnAddress, LCL, ARG, THIS, THAT
+        # saveFrame: push returnAddress, LCL, ARG, THIS, THAT
         saveFrameMemSegs = ['LCL', 'ARG', 'THIS', 'THAT']
         pushDRegister: [str] = [
             '@SP',
@@ -177,6 +176,12 @@ class CodeWriter:
             '@SP',
             'M=M+1'
         ]
+
+        # recall how the hackAssembler handles labels and symbols: on its
+        # first pass, it will see a (retAddr_n) label deeper in the code and
+        # convert it to the numerical value of the next line. then this
+        # symbol will be converted to that value on the second pass of the
+        # hackAssembler.
         pushRetAddr: [str] = [f'@retAddr_{self.retAddrCounter}', 'D=A']
         pushRetAddr.extend(pushDRegister)
 
@@ -184,12 +189,36 @@ class CodeWriter:
         saveFrame.extend(pushRetAddr)
 
         for index in range(4):
-            saveFrame.extend([f'@{saveFrameMemSegs[index]}', 'D=M'] )
+            saveFrame.extend([f'@{saveFrameMemSegs[index]}', 'D=M'])
             saveFrame.extend(pushDRegister)
 
-        setArg: [str] = []  # set ARG = SP-5-nArgs. if nArgs=0, SP-6
-        setLcl: [str] = []  # set LCL = SP
-        end: [str] = []  # goto functionName, set returnAddress label
+        argOffset: int
+        if zeroNArgs:  # todo cody suggests +max(1, nArgs)
+            argOffset = 6  # 5 default +1 extra for space we set aside earlier
+        else:
+            argOffset = 5+int(nArgs)
+
+        setArg: [str] = [  # set ARG = SP-5-nArgs. if nArgs=0, SP-6
+            '@SP',
+            'D=M',
+            f'@{argOffset}',
+            'D=D-A',  # D ← SP-5-nArgs or SP-6 if nArgs=0
+            '@ARG',
+            'M=D'
+        ]
+
+        setLcl: [str] = [  # set LCL = SP
+            '@SP',
+            'D=M',
+            '@LCL',
+            'M=D'
+        ]
+
+        end: [str] = [  # goto functionName, set returnAddress label
+            f'@{fName}',  # todo this will need a filename later
+            '0;JMP',
+            f'(retAddr_{self.retAddrCounter})'
+        ]
 
         result.extend(header)
         result.extend(nArgsCheck)
@@ -335,18 +364,11 @@ class CodeWriter:
             'M=M+1'
         ]
 
-        loops: int  # how many times are we executing 'push 0'?
         nVars = int(nVars)
-
         if nVars < 0:
             raise ValueError(f'nVars < 0 in: {command}')
-        elif nVars == 0:
-            # even if nVars is 0, we need 'argument 0' to be available to push
-            # the return value of our function to
-            loops = 1
-        else:
-            loops = nVars
 
+        loops: int = nVars  # how many times are we executing 'push 0'?
         result: [str] = [
             '// [ VM COMMAND ] ' + command,
             f'({fName})'

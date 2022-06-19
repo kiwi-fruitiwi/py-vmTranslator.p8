@@ -30,7 +30,7 @@ def main(filename: str) -> None:
     parser = Parser(filename)
     writer = CodeWriter('C:/Dropbox/code/nand2tetris/kiwi/nand2tetris'
                         '/projects/08/FunctionCalls/NestedCall'
-                        '/sys.asm')
+                        '/NestedCall.asm')
 
     results = []
 
@@ -72,11 +72,9 @@ def main(filename: str) -> None:
                 writer.writelines(
                     writer.writeFunction(command, parser.arg1(), parser.arg2())
                 )
-
                 print(f'function command: {command}')
 
             case Command.RETURN:
-                print(f'return command: {command}')
                 writer.writelines(
                     writer.writeReturn(command)
                 )

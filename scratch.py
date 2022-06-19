@@ -1,3 +1,6 @@
+import os
+
+
 # extend will extend per-character if you feed it a string
 # → enclose strings in a list :p
 
@@ -14,5 +17,12 @@ result.extend(nArgsCheck)
 
 print(result)
 
+# what does range do again? XD
 for index in range(4):
     print(index)
+
+# prints files of a certain extension inside a directory
+print(os.listdir('.'))
+for file in os.listdir('.'):
+    if file.lower().endswith('.py'):
+        print(file)
