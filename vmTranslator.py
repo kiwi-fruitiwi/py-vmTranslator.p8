@@ -32,8 +32,6 @@ def main(filename: str) -> None:
                         '/projects/08/FunctionCalls/NestedCall'
                         '/NestedCall.asm')
 
-    results = []
-
     while parser.hasMoreCommands():
         parser.advance()
         # print(f'{parser.commandType().name}')
@@ -59,30 +57,25 @@ def main(filename: str) -> None:
             #   todo → make this more consistent
 
             case Command.LABEL:
-                writer.writelines(writer.writeLabel(command, parser.arg1()))
+                writer.writeLabel(command, parser.arg1())
 
             case Command.IF_GOTO:
-                writer.writelines(writer.writeIfGotoLabel(command, parser.arg1()))
+                writer.writeIfGotoLabel(command, parser.arg1())
 
             case Command.GOTO:
-                writer.writelines(writer.writeGotoLabel(command, parser.arg1()))
+                writer.writeGotoLabel(command, parser.arg1())
                 print(command)
 
             case Command.FUNCTION:
-                writer.writelines(
-                    writer.writeFunction(command, parser.arg1(), parser.arg2())
-                )
+                writer.writeFunction(command, parser.arg1(), parser.arg2())
                 print(f'function command: {command}')
 
             case Command.RETURN:
-                writer.writelines(
-                    writer.writeReturn(command)
-                )
+                writer.writeReturn(command)
 
             case Command.CALL:
                 print(f'call command {command}')
-                writer.writelines(
-                    writer.writeCall(command, parser.arg1(), parser.arg2()))
+                writer.writeCall(command, parser.arg1(), parser.arg2())
 
             case _:
                 print(f'[ ERROR ] command not matched!')

@@ -153,7 +153,7 @@ class CodeWriter:
         #   set returnAddress label
 
         self.retAddrCounter += 1  # unique return address ID for every call
-        result: [str] = []  # initialize empty list of asm code
+        results: [str] = []  # initialize empty list of asm code
         header: [str] = ['// [ VM COMMAND ] ' + command]
 
         zeroNArgs: bool = (int(nArgs) == 0)
@@ -220,13 +220,14 @@ class CodeWriter:
             f'(retAddr_{self.retAddrCounter})'
         ]
 
-        result.extend(header)
-        result.extend(nArgsCheck)
-        result.extend(saveFrame)
-        result.extend(setArg)
-        result.extend(setLcl)
-        result.extend(end)
-        return result
+        results.extend(header)
+        results.extend(nArgsCheck)
+        results.extend(saveFrame)
+        results.extend(setArg)
+        results.extend(setLcl)
+        results.extend(end)
+
+        self.__writelines(results)
 
     # noinspection PyMethodMayBeStatic
     def writeReturn(self, command: str) -> [str]:
@@ -274,7 +275,7 @@ class CodeWriter:
             '@retAddr',
             'M=D',          # set retAddr variable to *(endFrame-5)
         """
-        return [
+        results = [
             '// [ VM COMMAND ] ' + command,
 
             # → endFrame = LCL
@@ -330,6 +331,7 @@ class CodeWriter:
             'A=M',
             '0;JMP'
         ]
+        self.__writelines(results)
 
     # noinspection PyMethodMayBeStatic
     def writeFunction(self, command: str, fName: str, nVars: int) -> [str]:
@@ -369,34 +371,36 @@ class CodeWriter:
             raise ValueError(f'nVars < 0 in: {command}')
 
         loops: int = nVars  # how many times are we executing 'push 0'?
-        result: [str] = [
+        results: [str] = [
             '// [ VM COMMAND ] ' + command,
             f'({fName})'
         ]
 
         for index in range(loops):
-            result.extend(loopCode)
+            results.extend(loopCode)
 
-        return result
+        self.__writelines(results)
 
     # noinspection PyMethodMayBeStatic
     def writeLabel(self, command: str, label: str) -> [str]:
-        return [  # hackAssembler handles labels on its 1st pass
+        results = [  # hackAssembler handles labels on its 1st pass
             '// [ VM COMMAND ] ' + command,
             f'({label})'
         ]
+        self.__writelines(results)
 
     # noinspection PyMethodMayBeStatic
     def writeGotoLabel(self, command: str, label: str) -> [str]:
-        return [
+        results = [
             '// [ VM COMMAND ] ' + command,
             f'@{label}',
             '0;JMP'         # unconditional jump to specified label
         ]
+        self.__writelines(results)
 
     # noinspection PyMethodMayBeStatic
     def writeIfGotoLabel(self, command: str, label: str) -> [str]:
-        return [  # hackAssembler handles labels on its 1st pass
+        results = [  # hackAssembler handles labels on its 1st pass
             '// [ VM COMMAND ] ' + command,
             '@SP',
             'AM=M-1',       # select *[SP-1]
@@ -404,6 +408,7 @@ class CodeWriter:
             f'@{label}',   # TODO add function name once we have multiple files
             'D;JNE'        # we just if *[SP-1] is true; note 0 is false
         ]
+        self.__writelines(results)
 
     # writes to output file the asm commands that implement the vm command given
     def writeArithmetic(self, command) -> [str]:  # List[str] requires import
@@ -414,27 +419,25 @@ class CodeWriter:
         result = []
         match command.split()[0]:
             case 'neg':
-                result = self.__writeNeg()
+                self.__writeNeg()
             case 'add':
-                result = self.__writeAdd()
+                self.__writeAdd()
             case 'sub':
-                result = self.__writeSub()
+                self.__writeSub()
             case 'eq':
-                result = self.__writeEq()
+                self.__writeEq()
             case 'lt':
-                result = self.__writeLt()
+                self.__writeLt()
             case 'gt':
-                result = self.__writeGt()
+                self.__writeGt()
             case 'not':
-                result = self.__writeNot()
+                self.__writeNot()
             case 'and':
-                result = self.__writeAnd()
+                self.__writeAnd()
             case 'or':
-                result = self.__writeOr()
+                self.__writeOr()
             case _:
                 print(f'command not found: {command}')
-
-        self.writelines(result)
 
     def writePushPop(self, command: str, segment: str, n: int) -> [str]:
         """
@@ -467,41 +470,39 @@ class CodeWriter:
         match command.split()[0]:  # push or pop
             case 'pop':
                 if segment == 'temp':
-                    result = self.__writePopTemp(command, n)
+                    self.__writePopTemp(command, n)
                 elif segment == 'pointer':
-                    result = self.__writePopPointer(command, n)
+                    self.__writePopPointer(command, n)
                 elif segment == 'static':
-                    result = self.__writePopStatic(command, n)
+                    self.__writePopStatic(command, n)
                 else:
-                    result = self.__writePopLATT(command, segDict[segment], n)
+                    self.__writePopLATT(command, segDict[segment], n)
             case 'push':
                 # take care of push constant i
                 if segment == 'constant':
-                    result = self.__writePushConstant(command, n)
+                    self.__writePushConstant(command, n)
                 elif segment == 'temp':
-                    result = self.__writePushTemp(command, n)
+                    self.__writePushTemp(command, n)
                 elif segment == 'pointer':
-                    result = self.__writePushPointer(command, n)
+                    self.__writePushPointer(command, n)
                 elif segment == 'static':
-                    result = self.__writePushStatic(command, n)
+                    self.__writePushStatic(command, n)
                 else:
-                    result = self.__writePushLATT(command, segDict[segment], n)
+                    self.__writePushLATT(command, segDict[segment], n)
             case _:
                 raise ValueError(f'{command} is not valid in writePushPop')
 
-        self.writelines(result)
-
     # noinspection PyMethodMayBeStatic
     def __writeEq(self) -> [str]:
-        return self.__equalityHelper('EQ')
+        self.__writelines(self.__equalityHelper('EQ'))
 
     # noinspection PyMethodMayBeStatic
     def __writeLt(self) -> [str]:
-        return self.__equalityHelper('LT')
+        self.__writelines(self.__equalityHelper('LT'))
 
     # noinspection PyMethodMayBeStatic
     def __writeGt(self) -> [str]:
-        return self.__equalityHelper('GT')
+        self.__writelines(self.__equalityHelper('GT'))
 
     # noinspection PyMethodMayBeStatic
     def __equalityHelper(self, equalityType: str) -> [str]:
@@ -520,7 +521,7 @@ class CodeWriter:
 
         # below, when SP-1 or SP-2 are mentioned, they refer to the top and 2nd
         # values of the stack, where SP-1 is the top
-        return [
+        results = [
             '// [ VM COMMAND ] ' + equalityType,
 
             # decrement stack pointer. load *(SP-1) → register D
@@ -574,7 +575,7 @@ class CodeWriter:
             push(a|b)
         :return:
         """
-        return [        # when SP is mentioned, it refers to the original SP
+        results = [        # when SP is mentioned, it refers to the original SP
             '// [ VM COMMAND ] or',
             '@SP',      # SP--
             'AM=M-1',
@@ -585,6 +586,7 @@ class CodeWriter:
             '@SP',
             'M=M+1'
         ]
+        self.__writelines(results)
 
     # noinspection PyMethodMayBeStatic
     def __writeAnd(self) -> [str]:
@@ -596,7 +598,7 @@ class CodeWriter:
             push(a&b)
         :return:
         """
-        return [        # when SP is mentioned, it refers to the original SP
+        results = [        # when SP is mentioned, it refers to the original SP
             '// [ VM COMMAND ] and',
             '@SP',      # SP--
             'AM=M-1',
@@ -607,10 +609,11 @@ class CodeWriter:
             '@SP',
             'M=M+1'
         ]
+        self.__writelines(results)
 
     # noinspection PyMethodMayBeStatic
     def __writeAdd(self) -> [str]:
-        return [
+        results = [
             '// [ VM COMMAND ] add',
             '@SP',
             'AM=M-1',   # SP--
@@ -621,12 +624,13 @@ class CodeWriter:
             '@SP',
             'M=M+1'
         ]
+        self.__writelines(results)
 
     # noinspection PyMethodMayBeStatic
     def __writeSub(self) -> [str]:
         # we always want the deeper stack element to subtract the shallower one
         #   push 5, push 1, sub → 5-1=4
-        return [
+        results = [
             '// [ VM COMMAND ] sub',
             '@SP',
             'AM=M-1',
@@ -637,24 +641,27 @@ class CodeWriter:
             '@SP',
             'M=M+1'
         ]
+        self.__writelines(results)
 
     # noinspection PyMethodMayBeStatic
     def __writeNeg(self) -> [str]:
-        return [
+        results = [
             '// [ VM COMMAND ] neg',
             '@SP',
             'A=M-1',
             'M=-M'
         ]
+        self.__writelines(results)
 
     # noinspection PyMethodMayBeStatic
     def __writeNot(self) -> [str]:
-        return [
+        results = [
             '// [ VM COMMAND ] not',
             '@SP',
             'A=M-1',    # shortened from M=M-1; A=M
             'M=!M'      # don't need @SP; M=M+1
         ]
+        self.__writelines(results)
 
     # noinspection PyMethodMayBeStatic
     def __writePushLATT(self, command: str, seg_location: int, n: int) -> [str]:
@@ -667,7 +674,7 @@ class CodeWriter:
         :param n:
         :return:
         """
-        return [
+        results = [
             '// [ VM COMMAND ] ' + command,
             '@'+str(n),
             'D=A',
@@ -686,6 +693,7 @@ class CodeWriter:
             '@SP',      # SP++
             'M=M+1'
         ]
+        self.__writelines(results)
 
     # noinspection PyMethodMayBeStatic
     def __writePopLATT(self, command: str, seg_location: int, n: int) -> [str]:
@@ -698,7 +706,7 @@ class CodeWriter:
         :param n:
         :return:
         """
-        return [
+        results = [
             '// [ VM COMMAND ] ' + command,
             '@'+str(n),
             'D=A',
@@ -717,10 +725,11 @@ class CodeWriter:
             'A=M',      # select RAM[popDest]
             'M=D'       # put popped value into RAM[popDest]
         ]
+        self.__writelines(results)
 
     # noinspection PyMethodMayBeStatic
     def __writePushStatic(self, command: str, n: int) -> [str]:
-        return [
+        results = [
             # push static 5 means push the value of Foo.5 onto the stack
             # 'Foo' is arbitrary, suggested to be the filename. but I'll choose
             # kiwi :p
@@ -735,10 +744,11 @@ class CodeWriter:
             '@SP',
             'M=M+1'
         ]
+        self.__writelines(results)
 
     # noinspection PyMethodMayBeStatic
     def __writePopStatic(self, command: str, n: int) -> [str]:
-        return [
+        results = [
             # pop static 5 means store *[SP-1] into new variable @Foo.5
             '// [ VM COMMAND ] ' + command,
             '@SP',
@@ -748,10 +758,11 @@ class CodeWriter:
             f'@Kiwi.{str(n)}',
             'M=D'
         ]
+        self.__writelines(results)
 
     # noinspection PyMethodMayBeStatic
     def __writePushPointer(self, command: str, n: int) -> [str]:
-        return [
+        results = [
             # given: 'pointer 0' is THIS. 'pointer 1' is THAT. n∈[0,1]
             # conveniently we can use i+3 since THIs is at index 3 while THAT
             # is at index 4
@@ -766,10 +777,11 @@ class CodeWriter:
             '@SP',      # SP++
             'M=M+1',
         ]
+        self.__writelines(results)
 
     # noinspection PyMethodMayBeStatic
     def __writePopPointer(self, command: str, n: int) -> [str]:
-        return [
+        results = [
             # given: 'pointer 0' is THIS. 'pointer 1' is THAT. n∈[0,1]
             # conveniently we can use i+3 since THIs is at index 3 while THAT
             # is at index 4
@@ -782,10 +794,11 @@ class CodeWriter:
             '@'+str(n+3),
             'M=D'   # THIS/THAT = *[SP-1]
         ]
+        self.__writelines(results)
 
     # noinspection PyMethodMayBeStatic
     def __writePushConstant(self, command: str, n: int) -> [str]:
-        return [
+        results = [
             '// [ VM COMMAND ] ' + command,
 
             # *SP=i, SP++
@@ -798,10 +811,11 @@ class CodeWriter:
             '@SP',
             'M=M+1'
         ]
+        self.__writelines(results)
 
     # noinspection PyMethodMayBeStatic
     def __writePopTemp(self, command: str, n: int):
-        return [
+        results = [
             '// [ VM COMMAND ] ' + command,
             '@' + str(n),
             'D=A',
@@ -822,10 +836,11 @@ class CodeWriter:
             'M=D'       # put popped value into RAM[i+5]
                         # *addr = *SP
         ]
+        self.__writelines(results)
 
     # noinspection PyMethodMayBeStatic
     def __writePushTemp(self, command: str, n: int):
-        return [
+        results = [
             '// [ VM COMMAND ] ' + command,
             '@'+str(n),
             'D=A',
@@ -843,8 +858,9 @@ class CodeWriter:
             '@SP',      # SP++
             'M=M+1'
         ]
+        self.__writelines(results)
 
-    def writelines(self, lines: [str]):
+    def __writelines(self, lines: [str]):
         # adds newlines between every entry in lines
         self.output.write('\n'.join(lines) + '\n')
 
