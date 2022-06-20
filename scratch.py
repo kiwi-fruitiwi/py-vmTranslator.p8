@@ -22,7 +22,8 @@ for index in range(4):
     print(index)
 
 # prints files of a certain extension inside a directory
-print(os.listdir('.'))
-for file in os.listdir('.'):
-    if file.lower().endswith('.py'):
+print(os.listdir('./vm'))
+
+for file in os.listdir('./vm'):
+    if file.lower().endswith('.vm'):
         print(file)
