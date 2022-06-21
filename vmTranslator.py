@@ -13,8 +13,8 @@ parser: parses each vm command into its lexical elements
 
 codeWriter: writes the assembly code that implements the parsed command
     ☒ opens file in constructor
-    ☐ writeArithmetic
-    ☐ writePushPop
+    ☒ writeArithmetic
+    ☒ writePushPop
     ☒ close
 
 main: drives the process. input: fileName.vm, output: fileName.asm
@@ -27,6 +27,10 @@ from parser import Parser, Command
 
 
 def main(filename: str) -> None:
+    # main must determine if filename is directory or file
+    # → and instantiate parser objects to read .vm files inside the directory
+
+
     parser = Parser(filename)
     writer = CodeWriter('C:/Dropbox/code/nand2tetris/kiwi/nand2tetris'
                         '/projects/08/FunctionCalls/NestedCall'
@@ -40,22 +44,14 @@ def main(filename: str) -> None:
 
         # process each command: is it writeArithmetic or writePushPop?
         match parser.commandType():
+            # project 7 commands: memory segments, arithmetic
             case Command.PUSH | Command.POP:
-                writer.writePushPop(
-                    command,
-                    parser.arg1(),
-                    int(parser.arg2())
-                )
+                writer.writePushPop(command, parser.arg1(), int(parser.arg2()))
 
             case Command.ARITHMETIC:
                 writer.writeArithmetic(command)
 
-            # case Command.C_LABEL | Command.C_IF_GOTO | Command.C_GOTO
-            # currently writelines(lines) outputs to file
-            #   but writeArithmetic and writePushPop do this inside
-            #   themselves instead of returning the list of asm commands.
-            #   todo → make this more consistent
-
+            # branching commands
             case Command.LABEL:
                 writer.writeLabel(command, parser.arg1())
 
@@ -66,8 +62,9 @@ def main(filename: str) -> None:
                 writer.writeGotoLabel(command, parser.arg1())
                 print(command)
 
+            # function, call, return
             case Command.FUNCTION:
-                writer.writeFunction(command, parser.arg1(), parser.arg2())
+                writer.writeFunction(command, parser.arg1(), int(parser.arg2()))
                 print(f'function command: {command}')
 
             case Command.RETURN:
@@ -75,19 +72,12 @@ def main(filename: str) -> None:
 
             case Command.CALL:
                 print(f'call command {command}')
-                writer.writeCall(command, parser.arg1(), parser.arg2())
+                writer.writeCall(command, parser.arg1(), int(parser.arg2()))
 
             case _:
                 print(f'[ ERROR ] command not matched!')
 
     writer.close()
-
-
-# main('vm/subTest.vm')
-# main('vm/StaticTest.vm')
-# main('vm/PointerTest.vm')
-# main('vm/BasicTest.vm')
-main('vm/archive/Sys.vm')
 
 
 ''' 
