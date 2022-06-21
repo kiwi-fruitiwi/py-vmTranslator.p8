@@ -157,7 +157,7 @@ class CodeWriter:
         header: [str] = ['// [ VM COMMAND ] ' + command]
 
         zeroNArgs: bool = (int(nArgs) == 0)
-        print(f'zeroNArgs→{nArgs}, {zeroNArgs}')
+        # print(f'zeroNArgs→{nArgs}, {zeroNArgs}')
         nArgsCheck: [str] = []
 
         # if nArgs is zero, we have to make space for the return value in arg0

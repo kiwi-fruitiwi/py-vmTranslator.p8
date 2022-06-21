@@ -24,17 +24,29 @@ main: drives the process. input: fileName.vm, output: fileName.asm
 
 from codewriter import CodeWriter
 from parser import Parser, Command
+import os
 
 
-def main(filename: str) -> None:
+def main(location: str) -> None:
     # main must determine if filename is directory or file
     # → and instantiate parser objects to read .vm files inside the directory
 
+    # if a file is detected: run process on file
+    # if a directory is detected, return list of .vm files; save directory name
+    #   → run process on each file in the list and append them
 
-    parser = Parser(filename)
-    writer = CodeWriter('C:/Dropbox/code/nand2tetris/kiwi/nand2tetris'
-                        '/projects/08/FunctionCalls/NestedCall'
-                        '/NestedCall.asm')
+    if os.path.isfile(location):
+        print(f'🐳 file detected: {location}')
+    elif os.path.isdir(location):
+        print(f'[DETECT] directory detected: {location}')
+    else:
+        raise ValueError(f'{location} does not seem to be a file or directory')
+
+    file = location + 'Sys.vm'
+    print(f'🚀 file → {file}')
+
+    parser = Parser(file)
+    writer = CodeWriter(location+'NestedCall.asm')
 
     while parser.hasMoreCommands():
         parser.advance()
@@ -60,24 +72,32 @@ def main(filename: str) -> None:
 
             case Command.GOTO:
                 writer.writeGotoLabel(command, parser.arg1())
-                print(command)
 
             # function, call, return
             case Command.FUNCTION:
                 writer.writeFunction(command, parser.arg1(), int(parser.arg2()))
-                print(f'function command: {command}')
 
             case Command.RETURN:
                 writer.writeReturn(command)
 
             case Command.CALL:
-                print(f'call command {command}')
                 writer.writeCall(command, parser.arg1(), int(parser.arg2()))
 
             case _:
-                print(f'[ ERROR ] command not matched!')
+                raise ValueError(f'[ ERROR ] command not matched!')
 
     writer.close()
+
+
+# main('vm/subTest.vm')
+# main('vm/StaticTest.vm')
+# main('vm/PointerTest.vm')
+# main('vm/BasicTest.vm')
+
+filename = 'C:/Dropbox/code/nand2tetris/kiwi/nand2tetris/projects/08/' \
+           'FunctionCalls/NestedCall/'
+
+main(filename)
 
 
 ''' 
