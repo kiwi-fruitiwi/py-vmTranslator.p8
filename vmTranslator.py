@@ -26,19 +26,43 @@ from codewriter import CodeWriter
 from parser import Parser, Command
 import os
 
+print('\n\n\n')
+
 
 def main(location: str) -> None:
     # main must determine if filename is directory or file
     # → and instantiate parser objects to read .vm files inside the directory
 
-    # if a file is detected: run process on file
-    # if a directory is detected, return list of .vm files; save directory name
-    #   → run process on each file in the list and append them
+    """
+    encapsulate parser writer loop with a single method
+    save the directory name
+
+        if a file is detected:
+            parser reads loc.vm
+            writer outputs to loc.asm
+        if directory:
+            vmFileList ← generate
+                parser reads all .vm files in vmFileList
+                while codeWriter writes each one to loc.asm
+
+    :param location:
+    :return:
+    """
 
     if os.path.isfile(location):
         print(f'🐳 file detected: {location}')
+        # if the path is a file, output asm is the file's name
+        # run parser writer loop on the file
     elif os.path.isdir(location):
         print(f'[DETECT] directory detected: {location}')
+        # if the path is a directory, generate list of vm files in directory
+        # run parser writer loop on each one; codeWriter uses 'w[rite]' mode at
+        # first, then '[a]ppend' mode for subsequent files in the list
+
+        # detect .vm files in this directory
+        for file in os.listdir('./test/directoryTest'):
+            if file.lower().endswith('.vm'):
+                print(file)
     else:
         raise ValueError(f'{location} does not seem to be a file or directory')
 
@@ -46,7 +70,7 @@ def main(location: str) -> None:
     print(f'🚀 file → {file}')
 
     parser = Parser(file)
-    writer = CodeWriter(location+'NestedCall.asm')
+    writer = CodeWriter(location + 'NestedCall.asm')
 
     while parser.hasMoreCommands():
         parser.advance()
@@ -98,7 +122,6 @@ filename = 'C:/Dropbox/code/nand2tetris/kiwi/nand2tetris/projects/08/' \
            'FunctionCalls/NestedCall/'
 
 main(filename)
-
 
 ''' 
 notes from lecture
