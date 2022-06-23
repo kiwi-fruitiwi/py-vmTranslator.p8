@@ -513,7 +513,7 @@ class CodeWriter:
             case _:
                 print(f'command not found: {command}')
 
-    def writePushPop(self, command: str, segment: str, n: int):
+    def writePushPop(self, command: str, segment: str, n: int, fileName: str):
         """
         remember to add comments to each command!
         pseudocode: all commands in format of push/pop segName i
@@ -548,7 +548,7 @@ class CodeWriter:
                 elif segment == 'pointer':
                     self.__writePopPointer(command, n)
                 elif segment == 'static':
-                    self.__writePopStatic(command, n)
+                    self.__writePopStatic(command, n, fileName)
                 else:
                     self.__writePopLATT(command, segDict[segment], n)
             case 'push':
@@ -560,7 +560,7 @@ class CodeWriter:
                 elif segment == 'pointer':
                     self.__writePushPointer(command, n)
                 elif segment == 'static':
-                    self.__writePushStatic(command, n)
+                    self.__writePushStatic(command, n, fileName)
                 else:
                     self.__writePushLATT(command, segDict[segment], n)
             case _:
@@ -803,13 +803,13 @@ class CodeWriter:
         self.__writelines(results)
 
     # noinspection PyMethodMayBeStatic
-    def __writePushStatic(self, command: str, n: int) -> [str]:
+    def __writePushStatic(self, command: str, n: int, fileName: str):
         results = [
             # push static 5 means push the value of Foo.5 onto the stack
             # 'Foo' is arbitrary, suggested to be the filename. but I'll choose
             # kiwi :p
             '// [ VM COMMAND ] ' + command,
-            f'@Kiwi.{str(n)}',  # TODO @Kiwi needs to be filename
+            f'@{fileName}.{str(n)}',  # TODO @Kiwi needs to be filename
             'D=M',  # @Foo.5 stored into register D
 
             '@SP',
@@ -822,7 +822,7 @@ class CodeWriter:
         self.__writelines(results)
 
     # noinspection PyMethodMayBeStatic
-    def __writePopStatic(self, command: str, n: int) -> [str]:
+    def __writePopStatic(self, command: str, n: int, fileName: str):
         results = [
             # pop static 5 means store *[SP-1] into new variable @Foo.5
             '// [ VM COMMAND ] ' + command,
@@ -830,7 +830,7 @@ class CodeWriter:
             'AM=M-1',
             'D=M',      # D ← top element of stack
 
-            f'@Kiwi.{str(n)}',
+            f'@{fileName}.{str(n)}',
             'M=D'
         ]
         self.__writelines(results)

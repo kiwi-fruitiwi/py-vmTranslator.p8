@@ -32,7 +32,7 @@ print('\n\n\n')
 
 # translates vm code to assembly at the specified locations with an option to
 # overwrite writeLoc
-def translate(readLoc: str, writer: CodeWriter):
+def translate(readLoc: str, writer: CodeWriter, fileName: str):
     print(f'[ INFO ] translating starting → {readLoc}')
 
     parser = Parser(readLoc)
@@ -47,7 +47,10 @@ def translate(readLoc: str, writer: CodeWriter):
         match parser.commandType():
             # project 7 commands: memory segments, arithmetic
             case Command.PUSH | Command.POP:
-                writer.writePushPop(command, parser.arg1(), int(parser.arg2()))
+                writer.writePushPop(command,
+                                    parser.arg1(),
+                                    int(parser.arg2()),
+                                    fileName)
 
             case Command.ARITHMETIC:
                 writer.writeArithmetic(command)
@@ -121,10 +124,11 @@ def main(path: str) -> None:
         outputPath = str(parentPath) + os.sep + stem + ".asm"
         writer = CodeWriter(outputPath)
 
-        readPath = path
-        translate(readPath, writer)
+        readPath = str(path)
+        basename = os.path.basename(os.path.dirname(path))
 
-
+        # TODO test basename here
+        translate(readPath, writer, basename)
     elif os.path.isdir(path):
         print(f'[DETECT] directory detected: {path}')
         # if the path is a directory, generate list of vm files in directory
@@ -139,7 +143,6 @@ def main(path: str) -> None:
         print('\n')
 
         # detect .vm files in this directory
-
         # save directory root, which always contains a slash at the end?
         root = path
         print(f'root → {root}')
@@ -151,9 +154,6 @@ def main(path: str) -> None:
         print(f'dirname → {basename}\n')
 
         outputPath = root+basename+".asm"
-        # print(f 'output path → {outputPath}')
-
-
         print(f'✒ overwriting {outputPath}')
 
         writer = CodeWriter(outputPath)
@@ -161,9 +161,11 @@ def main(path: str) -> None:
 
         '''
         overwrite .asm output if this is the first time we're in a directory,
-        but append for all following files
+        but append for all following files ← deprecated because we now open 
+        codeWriter only once.
         
-        we must start with Sys.vm, and then the other files
+        we must start with Sys.vm, and then the other files; raise an error 
+        if Sys.vm is not present, but move it to index 0 if it is
         '''
         filesInDirectory = os.listdir(path)
         if 'Sys.vm' not in filesInDirectory:
@@ -176,26 +178,13 @@ def main(path: str) -> None:
                         vmFiles.append(file)
             vmFiles.insert(0, 'Sys.vm')
 
-
-        # firstFileInDirectory: bool = True
         for file in vmFiles:
             if file.lower().endswith('.vm'):  # 'file' is a VM file
                 readPath = root+file
                 print( f'📃 translating: {readPath}')
 
-                '''
-                we want to only overwrite the asm output file if
-                'firstFileInDirectory' is true. coincidentally
-                setting it equal to the {overwrite} flag works out
-                
-                but now we overwrite when writing bootstrap code so we no 
-                longer need to worry about it
-                '''
-                translate(readPath, writer)
-                # overwrite=firstFileInDirectory)
-
-
-                firstFileInDirectory = False
+                # TODO: file should strip .vm :p
+                translate(readPath, writer, file)
 
     else:
         raise ValueError(f'{path} does not seem to be a file or directory')
@@ -209,11 +198,15 @@ def main(path: str) -> None:
 
 # directories must end with an {os.sep} or translate() will append
 # directoryName and fileName without one
-filename = 'C:/Dropbox/code/nand2tetris/kiwi/nand2tetris/projects/08/' \
-           'FunctionCalls/FibonacciElement/'
+
+# filename = 'C:/Dropbox/code/nand2tetris/kiwi/nand2tetris/projects/08/' \
+#            'FunctionCalls/FibonacciElement/'
 
 # filename = 'C:/Dropbox/code/nand2tetris/kiwi/nand2tetris/projects/08/' \
 #            'FunctionCalls/NestedCall/Sys.vm'
+
+filename = 'C:/Dropbox/code/nand2tetris/kiwi/nand2tetris/projects/08/' \
+           'FunctionCalls/StaticsTest/'
 
 main(filename)
 
