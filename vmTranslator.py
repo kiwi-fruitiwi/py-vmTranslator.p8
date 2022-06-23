@@ -119,12 +119,12 @@ def main(absPath: str) -> None:
 
         path = Path(absPath)
         parentPath = path.parent.absolute()
-        print(f'parent path → {parentPath}')
+        print(f'parent path → {str(parentPath)+os.sep}')
 
         # if the path is a file, output asm is the file's name
         # → no Sys.init or bootstrapping code needed
         translate(absPath,
-                  str(parentPath)+stem+".asm",
+                  str(parentPath)+os.sep+stem+".asm",
                   overwrite=True)
 
 
@@ -163,6 +163,7 @@ def main(absPath: str) -> None:
         #   TODO → overwriting no longer requires flag; bootstrap overwrites
         writer = CodeWriter(outputPath, 'w')
         writer.writeBootstrap()
+        writer.close()
 
         '''
         overwrite .asm output if this is the first time we're in a directory,
@@ -197,11 +198,14 @@ def main(absPath: str) -> None:
 #
 # filename = 'C:/Dropbox/code/nand2tetris/kiwi/nand2tetris/projects/07/' \
 #            'MemoryAccess/BasicTest/BasicTest.vm'
+#
+# filename = 'C:/Dropbox/code/nand2tetris/kiwi/nand2tetris/projects/07/' \
+#            'StackArithmetic/StackTest/StackTest.vm'
 
 # directories must end with an {os.sep} or translate() will append
 # directoryName and fileName without one
 filename = 'C:/Dropbox/code/nand2tetris/kiwi/nand2tetris/projects/08/' \
-           'FunctionCalls/NestedCall/'
+           'FunctionCalls/FibonacciElement/'
 
 main(filename)
 

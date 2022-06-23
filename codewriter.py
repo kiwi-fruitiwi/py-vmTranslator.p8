@@ -66,24 +66,9 @@ class CodeWriter:
         @SP
         M=D
 
-        @1
+        @1      → 1, 2, 3, 4
         D=-A
-        @LCL
-        M=D
-
-        @2
-        D=-A
-        @ARG
-        M=D
-
-        @3
-        D=-A
-        @THIS
-        M=D
-
-        @3
-        D=-A
-        @THAT
+        @LCL    → ARG, THIS, THAT
         M=D
 
         memSegs = ['LCL', 'ARG', 'THIS', 'THAT']
@@ -96,9 +81,23 @@ class CodeWriter:
         :return:
         """
         setSLATT = [
-            '',
-            ''
+            '@256',
+            'D=A',
+            '@SP',
+            'M=D'
         ]
+
+        # set LCL to -1, ARG to -2, THIS to -3, THAT to -4. helps with debugging
+        memSegs = ['LCL', 'ARG', 'THIS', 'THAT']
+        setLATT = []
+        for index in range(0, 4):
+            setLATT.extend([
+                f'@{str(index+1)}',
+                'D=-A',
+                f'@{memSegs[index]}',
+                'M=D'
+            ])
+        setSLATT.extend(setLATT)
 
         callSysInit = self.createCall('call Sys.init 0', 'Sys.init', 0)
 
@@ -108,9 +107,9 @@ class CodeWriter:
         self.__writelines(results)
 
 
-    def createCall(self, command:str, fName:str, nArgs:int) -> [str]:
+    def createCall(self, command: str, fName: str, nArgs: int) -> [str]:
         """
-        examples: call Sys.add12 1, function Sys.init 0
+        examples: call Sys.add12 1, call Sys.main 0
 
         pseudocode
             push retAddr
@@ -284,7 +283,7 @@ class CodeWriter:
         self.__writelines(results)
 
     # noinspection PyMethodMayBeStatic
-    def writeReturn(self, command: str) -> [str]:
+    def writeReturn(self, command: str):
         """
         pseudocode
             endFrame = LCL
@@ -388,7 +387,7 @@ class CodeWriter:
         self.__writelines(results)
 
     # noinspection PyMethodMayBeStatic
-    def writeFunction(self, command: str, fName: str, nVars: int) -> [str]:
+    def writeFunction(self, command: str, fName: str, nVars: int):
         """
         always follows call
         → (functionName)
@@ -436,7 +435,7 @@ class CodeWriter:
         self.__writelines(results)
 
     # noinspection PyMethodMayBeStatic
-    def writeLabel(self, command: str, label: str) -> [str]:
+    def writeLabel(self, command: str, label: str):
         results = [  # hackAssembler handles labels on its 1st pass
             '// [ VM COMMAND ] ' + command,
             f'({label})'
@@ -444,7 +443,7 @@ class CodeWriter:
         self.__writelines(results)
 
     # noinspection PyMethodMayBeStatic
-    def writeGotoLabel(self, command: str, label: str) -> [str]:
+    def writeGotoLabel(self, command: str, label: str):
         results = [
             '// [ VM COMMAND ] ' + command,
             f'@{label}',
@@ -453,7 +452,7 @@ class CodeWriter:
         self.__writelines(results)
 
     # noinspection PyMethodMayBeStatic
-    def writeIfGotoLabel(self, command: str, label: str) -> [str]:
+    def writeIfGotoLabel(self, command: str, label: str):
         results = [  # hackAssembler handles labels on its 1st pass
             '// [ VM COMMAND ] ' + command,
             '@SP',
@@ -465,7 +464,7 @@ class CodeWriter:
         self.__writelines(results)
 
     # writes to output file the asm commands that implement the vm command given
-    def writeArithmetic(self, command) -> [str]:  # List[str] requires import
+    def writeArithmetic(self, command):  # List[str] requires import
         # remember to add comments to each command!
         # arith = ['add', 'sub', 'neg', 'eq', 'gt', 'lt', 'and', 'or', 'not']
 
@@ -493,7 +492,7 @@ class CodeWriter:
             case _:
                 print(f'command not found: {command}')
 
-    def writePushPop(self, command: str, segment: str, n: int) -> [str]:
+    def writePushPop(self, command: str, segment: str, n: int):
         """
         remember to add comments to each command!
         pseudocode: all commands in format of push/pop segName i
@@ -547,15 +546,15 @@ class CodeWriter:
                 raise ValueError(f'{command} is not valid in writePushPop')
 
     # noinspection PyMethodMayBeStatic
-    def __writeEq(self) -> [str]:
+    def __writeEq(self):
         self.__writelines(self.__equalityHelper('EQ'))
 
     # noinspection PyMethodMayBeStatic
-    def __writeLt(self) -> [str]:
+    def __writeLt(self):
         self.__writelines(self.__equalityHelper('LT'))
 
     # noinspection PyMethodMayBeStatic
-    def __writeGt(self) -> [str]:
+    def __writeGt(self):
         self.__writelines(self.__equalityHelper('GT'))
 
     # noinspection PyMethodMayBeStatic
@@ -618,6 +617,7 @@ class CodeWriter:
 
             '(END' + n + ')'
         ]
+        return results
 
     # noinspection PyMethodMayBeStatic
     def __writeOr(self) -> [str]:  # same as 'and' but with one change
