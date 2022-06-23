@@ -51,8 +51,8 @@ class CodeWriter:
     List[str] of Hack assembly commands that implement the VM command.
     """
 
-    def __init__(self, filename):
-        self.output = open(filename, 'w')
+    def __init__(self, filename: str, writeChar: str):
+        self.output = open(filename, writeChar)
         self.equalityCounter = 0
         self.retAddrCounter = 0
 

@@ -24,53 +24,23 @@ main: drives the process. input: fileName.vm, output: fileName.asm
 
 from codewriter import CodeWriter
 from parser import Parser, Command
+from pathlib import Path  # used for Path().stem
 import os
 
 print('\n\n\n')
 
 
-def main(location: str) -> None:
-    # main must determine if filename is directory or file
-    # → and instantiate parser objects to read .vm files inside the directory
+# translates vm code to assembly at the specified locations with an option to
+# overwrite writeLoc
+def translate(readLoc: str, writeLoc: str, overwrite: bool):
+    print(f'[ INFO ] translating starting → {readLoc}')
 
-    """
-    encapsulate parser writer loop with a single method
-    save the directory name
+    parser = Parser(readLoc)
 
-        if a file is detected:
-            parser reads loc.vm
-            writer outputs to loc.asm
-        if directory:
-            vmFileList ← generate
-                parser reads all .vm files in vmFileList
-                while codeWriter writes each one to loc.asm
-
-    :param location:
-    :return:
-    """
-
-    if os.path.isfile(location):
-        print(f'🐳 file detected: {location}')
-        # if the path is a file, output asm is the file's name
-        # run parser writer loop on the file
-    elif os.path.isdir(location):
-        print(f'[DETECT] directory detected: {location}')
-        # if the path is a directory, generate list of vm files in directory
-        # run parser writer loop on each one; codeWriter uses 'w[rite]' mode at
-        # first, then '[a]ppend' mode for subsequent files in the list
-
-        # detect .vm files in this directory
-        for file in os.listdir('./test/directoryTest'):
-            if file.lower().endswith('.vm'):
-                print(file)
+    if overwrite:
+        writer = CodeWriter(writeLoc, 'w')
     else:
-        raise ValueError(f'{location} does not seem to be a file or directory')
-
-    file = location + 'Sys.vm'
-    print(f'🚀 file → {file}')
-
-    parser = Parser(file)
-    writer = CodeWriter(location + 'NestedCall.asm')
+        writer = CodeWriter(writeLoc, 'a')
 
     while parser.hasMoreCommands():
         parser.advance()
@@ -111,15 +81,102 @@ def main(location: str) -> None:
                 raise ValueError(f'[ ERROR ] command not matched!')
 
     writer.close()
+    print(f'[ INFO ] assembly output complete → {writeLoc}')
 
 
-# main('vm/subTest.vm')
-# main('vm/StaticTest.vm')
-# main('vm/PointerTest.vm')
-# main('vm/BasicTest.vm')
+def main(absPath: str) -> None:
+    # main must determine if filename is directory or file
+    # → and instantiate parser objects to read .vm files inside the directory
 
-filename = 'C:/Dropbox/code/nand2tetris/kiwi/nand2tetris/projects/08/' \
-           'FunctionCalls/NestedCall/'
+    """
+    encapsulate parser writer loop with a single method
+    save the directory name
+
+        if a file is detected:
+            parser reads loc.vm
+            writer outputs to loc.asm
+        if directory:
+            vmFileList ← generate
+                parser reads all .vm files in vmFileList
+                while codeWriter writes each one to loc.asm
+
+    :param absPath:
+    :return:
+    """
+
+    # os.path.abspath returns abspath from where the .py file is executing
+
+    if os.path.isfile(absPath):
+        print(f'🐳 file detected: {absPath}')
+        # run parser writer loop on the file
+        # todo find directory name. or chop off .vm and replace with .asm
+
+        basename = os.path.basename(os.path.dirname(absPath))
+        print(f'directory name → {basename}\n')
+
+        stem = Path(absPath).stem  # a stem is a filename without an extension
+        print(f'stem → {stem}\n')
+
+        path = Path(absPath)
+        parentPath = path.parent.absolute()
+        print(f'parent path → {parentPath}')
+
+        # if the path is a file, output asm is the file's name
+        translate(absPath,
+                  str(parentPath)+stem+".asm",
+                  overwrite=True)
+
+
+    elif os.path.isdir(absPath):
+        print(f'[DETECT] directory detected: {absPath}')
+        # if the path is a directory, generate list of vm files in directory
+        # run parser writer loop on each one; codeWriter uses 'w[rite]' mode at
+        # first, then '[a]ppend' mode for subsequent files in the list
+
+        # loop through .vm files in directory
+        for file in os.listdir(absPath):
+            if file.lower().endswith('.vm'):
+                print(f'🚙 looping through vm files → {file}, '
+                      f'{os.path.abspath(file)}')
+        print('\n')
+
+        # detect .vm files in this directory
+        # we should overwrite if this is the first time we're in a directory
+        #   but append for all following files
+
+        # save directory root
+        root = absPath
+        # print(f 'root → {root}')
+
+        # folder name, not path
+        basename = os.path.basename(os.path.dirname(absPath))
+        # print(f 'dirname → {basename}\n')
+
+        outputPath = root+basename+".asm"
+        # print(f 'output path → {outputPath}')
+
+        for file in os.listdir(absPath):
+            if file.lower().endswith('.vm'):  # 'file' is a VM file
+                readPath = root+file
+                # print( f'📃 translating: {readPath}')
+                translate(readPath,
+                          outputPath,
+                          overwrite=False)
+    else:
+        raise ValueError(f'{absPath} does not seem to be a file or directory')
+
+    # translate(location+'Sys.vm', location+'NestedCall.asm', overwrite=True)
+
+
+# filename = 'C:/Dropbox/code/nand2tetris/kiwi/nand2tetris/projects/08/' \
+#            'FunctionCalls/FibonacciElement/'
+#
+# filename = 'C:/Dropbox/code/nand2tetris/kiwi/nand2tetris/projects/07/' \
+#            'MemoryAccess/BasicTest/BasicTest.vm'
+
+# directories must end with an {os.sep}, which is in this case a '/'
+filename = 'C:/Dropbox/code/nand2tetris/kiwi/nand2tetris/projects/07/' \
+           'MemoryAccess/StaticTest/'
 
 main(filename)
 
