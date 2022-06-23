@@ -57,7 +57,21 @@ class CodeWriter:
         self.retAddrCounter = 0
 
     # noinspection PyMethodMayBeStatic
-    def writeCall(self, command: str, fName: str, nArgs: int) -> [str]:
+    def writeBootstrap(self):
+        setSLATT = [
+            '',
+            ''
+        ]
+
+        callSysInit = self.createCall('call Sys.init 0', 'Sys.init', 0)
+
+        results = []
+        results.extend(setSLATT)
+        results.extend(callSysInit)
+        self.__writelines(results)
+
+
+    def createCall(self, command:str, fName:str, nArgs:int) -> [str]:
         """
         examples: call Sys.add12 1, function Sys.init 0
 
@@ -141,7 +155,6 @@ class CodeWriter:
             if nArgs == 0: # save a spot for argument 0: return address location
             @SP
             M=M+1
-
         """
 
         # our code consists of several parts:
@@ -196,7 +209,7 @@ class CodeWriter:
         if zeroNArgs:  # todo cody suggests +max(1, nArgs)
             argOffset = 6  # 5 default +1 extra for space we set aside earlier
         else:
-            argOffset = 5+int(nArgs)
+            argOffset = 5 + int(nArgs)
 
         setArg: [str] = [  # set ARG = SP-5-nArgs. if nArgs=0, SP-6
             '@SP',
@@ -226,7 +239,11 @@ class CodeWriter:
         results.extend(setArg)
         results.extend(setLcl)
         results.extend(end)
+        return results
 
+    # noinspection PyMethodMayBeStatic
+    def writeCall(self, command: str, fName: str, nArgs: int):
+        results = self.createCall(command, fName, nArgs)
         self.__writelines(results)
 
     # noinspection PyMethodMayBeStatic

@@ -180,8 +180,6 @@ def main(absPath: str) -> None:
     else:
         raise ValueError(f'{absPath} does not seem to be a file or directory')
 
-    # translate(location+'Sys.vm', location+'NestedCall.asm', overwrite=True)
-
 
 # filename = 'C:/Dropbox/code/nand2tetris/kiwi/nand2tetris/projects/08/' \
 #            'FunctionCalls/FibonacciElement/'
@@ -189,7 +187,8 @@ def main(absPath: str) -> None:
 # filename = 'C:/Dropbox/code/nand2tetris/kiwi/nand2tetris/projects/07/' \
 #            'MemoryAccess/BasicTest/BasicTest.vm'
 
-# directories must end with an {os.sep}, which is in this case a '/'
+# directories must end with an {os.sep} or translate() will append
+# directoryName and fileName without one
 filename = 'C:/Dropbox/code/nand2tetris/kiwi/nand2tetris/projects/08/' \
            'FunctionCalls/NestedCall/'
 
