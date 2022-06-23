@@ -27,3 +27,8 @@ print(os.listdir('./vm'))
 for file in os.listdir('./vm'):
     if file.lower().endswith('.vm'):
         print(file)
+
+test = [1, 2, 3, 4, 5]
+print(test)
+test.insert(0, 6)
+print(test)

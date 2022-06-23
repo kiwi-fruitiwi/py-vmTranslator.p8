@@ -51,10 +51,16 @@ class CodeWriter:
     List[str] of Hack assembly commands that implement the VM command.
     """
 
-    def __init__(self, filename: str, writeChar: str):
-        self.output = open(filename, writeChar)
+    def __init__(self, outputPath: str):
+        self.output = open(outputPath, 'w')
         self.equalityCounter = 0
         self.retAddrCounter = 0
+        self.outputPath = outputPath
+        self.currentVMFile = ''
+
+    # noinspection PyMethodMayBeStatic
+    def getOutputFileName(self):
+        return self.outputPath
 
     # noinspection PyMethodMayBeStatic
     def writeBootstrap(self):
@@ -81,6 +87,7 @@ class CodeWriter:
         :return:
         """
         setSLATT = [
+            '// [ VM Bootstrap ]',
             '@256',
             'D=A',
             '@SP',
@@ -99,15 +106,23 @@ class CodeWriter:
             ])
         setSLATT.extend(setLATT)
 
-        callSysInit = self.createCall('call Sys.init 0', 'Sys.init', 0)
+        callSysInit = self.createCall('call Sys.init 0', 'Sys.init', 0,
+                                      init=True)
 
         results = []
         results.extend(setSLATT)
         results.extend(callSysInit)
         self.__writelines(results)
 
+    # update filename our parser is currently on
+    def setCurrentReadingFile(self, filename: str):
+        self.currentVMFile = filename
 
-    def createCall(self, command: str, fName: str, nArgs: int) -> [str]:
+    def __incrementRetAddr(self):
+        self.retAddrCounter += 1  # unique return address ID for every call
+        print(f'⌚ retAddrCounter incrementing to {self.retAddrCounter}')
+
+    def createCall(self, command: str, fName: str, nArgs: int, init: bool):
         """
         examples: call Sys.add12 1, call Sys.main 0
 
@@ -201,7 +216,9 @@ class CodeWriter:
         #   goto functionName
         #   set returnAddress label
 
-        self.retAddrCounter += 1  # unique return address ID for every call
+
+        # unique return address ID for every call
+        self.__incrementRetAddr()
         results: [str] = []  # initialize empty list of asm code
         header: [str] = ['// [ VM COMMAND ] ' + command]
 
@@ -242,7 +259,9 @@ class CodeWriter:
             saveFrame.extend(pushDRegister)
 
         argOffset: int
-        if zeroNArgs:  # todo cody suggests +max(1, nArgs)
+        # make extra room for the return value IF we have 0 nArgs but skip
+        # this step if we're calling Sys.init because it doesn't return
+        if zeroNArgs and not init:  # todo cody suggests +max(1, nArgs)
             argOffset = 6  # 5 default +1 extra for space we set aside earlier
         else:
             argOffset = 5 + int(nArgs)
@@ -270,7 +289,9 @@ class CodeWriter:
         ]
 
         results.extend(header)
-        results.extend(nArgsCheck)
+        if not init:
+            # add space in memory for return value, except for Sys.init
+            results.extend(nArgsCheck)
         results.extend(saveFrame)
         results.extend(setArg)
         results.extend(setLcl)
@@ -279,7 +300,7 @@ class CodeWriter:
 
     # noinspection PyMethodMayBeStatic
     def writeCall(self, command: str, fName: str, nArgs: int):
-        results = self.createCall(command, fName, nArgs)
+        results = self.createCall(command, fName, nArgs, init=False)
         self.__writelines(results)
 
     # noinspection PyMethodMayBeStatic
@@ -916,6 +937,7 @@ class CodeWriter:
 
     def __writelines(self, lines: [str]):
         # adds newlines between every entry in lines
+        # print(f'🖋 writing {lines}')
         self.output.write('\n'.join(lines) + '\n')
 
     def close(self):

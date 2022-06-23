@@ -32,15 +32,10 @@ print('\n\n\n')
 
 # translates vm code to assembly at the specified locations with an option to
 # overwrite writeLoc
-def translate(readLoc: str, writeLoc: str, overwrite: bool):
+def translate(readLoc: str, writer: CodeWriter):
     print(f'[ INFO ] translating starting → {readLoc}')
 
     parser = Parser(readLoc)
-
-    if overwrite:
-        writer = CodeWriter(writeLoc, 'w')
-    else:
-        writer = CodeWriter(writeLoc, 'a')
 
     while parser.hasMoreCommands():
         parser.advance()
@@ -80,11 +75,10 @@ def translate(readLoc: str, writeLoc: str, overwrite: bool):
             case _:
                 raise ValueError(f'[ ERROR ] command not matched!')
 
-    writer.close()
-    print(f'[ INFO ] assembly output complete → {writeLoc}')
+    print(f'\n[ INFO ] assembly output complete → {writer.outputPath}')
 
 
-def main(absPath: str) -> None:
+def main(path: str) -> None:
     # main must determine if filename is directory or file
     # → and instantiate parser objects to read .vm files inside the directory
 
@@ -100,42 +94,45 @@ def main(absPath: str) -> None:
                 parser reads all .vm files in vmFileList
                 while codeWriter writes each one to loc.asm
 
-    :param absPath:
+    :param path:
     :return:
     """
 
     # os.path.abspath returns abspath from where the .py file is executing
 
-    if os.path.isfile(absPath):
-        print(f'🐳 file detected: {absPath}')
+    writer: CodeWriter  # declare our global codeWriter object
+    if os.path.isfile(path):
+        print(f'🐳 file detected: {path}')
         # run parser writer loop on the file
         # todo find directory name. or chop off .vm and replace with .asm
 
-        basename = os.path.basename(os.path.dirname(absPath))
+        basename = os.path.basename(os.path.dirname(path))
         print(f'directory name → {basename}\n')
 
-        stem = Path(absPath).stem  # a stem is a filename without an extension
+        stem = Path(path).stem  # a stem is a filename without an extension
         print(f'stem → {stem}\n')
 
-        path = Path(absPath)
+        path = Path(path)
         parentPath = path.parent.absolute()
         print(f'parent path → {str(parentPath)+os.sep}')
 
         # if the path is a file, output asm is the file's name
         # → no Sys.init or bootstrapping code needed
-        translate(absPath,
-                  str(parentPath)+os.sep+stem+".asm",
-                  overwrite=True)
+        outputPath = str(parentPath) + os.sep + stem + ".asm"
+        writer = CodeWriter(outputPath)
+
+        readPath = path
+        translate(readPath, writer)
 
 
-    elif os.path.isdir(absPath):
-        print(f'[DETECT] directory detected: {absPath}')
+    elif os.path.isdir(path):
+        print(f'[DETECT] directory detected: {path}')
         # if the path is a directory, generate list of vm files in directory
         # run parser writer loop on each one; codeWriter uses 'w[rite]' mode at
         # first, then '[a]ppend' mode for subsequent files in the list
 
         # loop through .vm files in directory
-        for file in os.listdir(absPath):
+        for file in os.listdir(path):
             if file.lower().endswith('.vm'):
                 print(f'🚙 looping through vm files → {file}, '
                       f'{os.path.abspath(file)}')
@@ -144,36 +141,47 @@ def main(absPath: str) -> None:
         # detect .vm files in this directory
 
         # save directory root, which always contains a slash at the end?
-        root = absPath
+        root = path
         print(f'root → {root}')
 
         # basename is the name of the directory, e.g.
         # c:/Dropbox/StaticTest/ → StaticTest
-        basename = os.path.basename(os.path.dirname(absPath))
-        print(f'os.path.dirname(absPath) → {os.path.dirname(absPath)}')
+        basename = os.path.basename(os.path.dirname(path))
+        print(f'os.path.dirname(absPath) → {os.path.dirname(path)}')
         print(f'dirname → {basename}\n')
 
         outputPath = root+basename+".asm"
         # print(f 'output path → {outputPath}')
 
 
-        # TODO → write bootstrap code here and use codeWriter.writeBootstrap
-        #   TODO → set SLATT, call Sys.init 0
-        #   TODO → pass fileName into codeWriter for function
-        #   TODO → overwriting no longer requires flag; bootstrap overwrites
-        writer = CodeWriter(outputPath, 'w')
+        print(f'✒ overwriting {outputPath}')
+
+        writer = CodeWriter(outputPath)
         writer.writeBootstrap()
-        writer.close()
 
         '''
         overwrite .asm output if this is the first time we're in a directory,
         but append for all following files
+        
+        we must start with Sys.vm, and then the other files
         '''
+        filesInDirectory = os.listdir(path)
+        if 'Sys.vm' not in filesInDirectory:
+            raise ValueError(f'Sys.vm not present in directory.')
+        else:
+            vmFiles = []
+            for file in filesInDirectory:
+                if file.lower().endswith('.vm'):
+                    if file != 'Sys.vm':
+                        vmFiles.append(file)
+            vmFiles.insert(0, 'Sys.vm')
+
+
         # firstFileInDirectory: bool = True
-        for file in os.listdir(absPath):
+        for file in vmFiles:
             if file.lower().endswith('.vm'):  # 'file' is a VM file
                 readPath = root+file
-                # print( f'📃 translating: {readPath}')
+                print( f'📃 translating: {readPath}')
 
                 '''
                 we want to only overwrite the asm output file if
@@ -183,19 +191,16 @@ def main(absPath: str) -> None:
                 but now we overwrite when writing bootstrap code so we no 
                 longer need to worry about it
                 '''
-                translate(readPath, outputPath, False)
+                translate(readPath, writer)
                 # overwrite=firstFileInDirectory)
 
 
                 firstFileInDirectory = False
 
     else:
-        raise ValueError(f'{absPath} does not seem to be a file or directory')
+        raise ValueError(f'{path} does not seem to be a file or directory')
 
 
-# filename = 'C:/Dropbox/code/nand2tetris/kiwi/nand2tetris/projects/08/' \
-#            'FunctionCalls/FibonacciElement/'
-#
 # filename = 'C:/Dropbox/code/nand2tetris/kiwi/nand2tetris/projects/07/' \
 #            'MemoryAccess/BasicTest/BasicTest.vm'
 #
@@ -206,6 +211,9 @@ def main(absPath: str) -> None:
 # directoryName and fileName without one
 filename = 'C:/Dropbox/code/nand2tetris/kiwi/nand2tetris/projects/08/' \
            'FunctionCalls/FibonacciElement/'
+
+# filename = 'C:/Dropbox/code/nand2tetris/kiwi/nand2tetris/projects/08/' \
+#            'FunctionCalls/NestedCall/Sys.vm'
 
 main(filename)
 
