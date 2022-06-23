@@ -122,6 +122,7 @@ def main(absPath: str) -> None:
         print(f'parent path → {parentPath}')
 
         # if the path is a file, output asm is the file's name
+        # → no Sys.init or bootstrapping code needed
         translate(absPath,
                   str(parentPath)+stem+".asm",
                   overwrite=True)
@@ -158,22 +159,32 @@ def main(absPath: str) -> None:
 
         # TODO → write bootstrap code here and use codeWriter.writeBootstrap
         #   TODO → set SLATT, call Sys.init 0
-        #   TODO → pass fileName into codeWriter
+        #   TODO → pass fileName into codeWriter for function
+        #   TODO → overwriting no longer requires flag; bootstrap overwrites
+        writer = CodeWriter(outputPath, 'w')
+        writer.writeBootstrap()
 
-        # overwrite .asm output if this is the first time we're in a directory,
-        # but append for all following files
-        firstFileInDirectory: bool = True
+        '''
+        overwrite .asm output if this is the first time we're in a directory,
+        but append for all following files
+        '''
+        # firstFileInDirectory: bool = True
         for file in os.listdir(absPath):
             if file.lower().endswith('.vm'):  # 'file' is a VM file
                 readPath = root+file
                 # print( f'📃 translating: {readPath}')
 
-                translate(readPath,
-                          outputPath,
-                          # we want to only overwrite the asm output file if
-                          # 'firstFileInDirectory' is true. coincidentally
-                          # setting it equal to the {overwrite} flag works out
-                          overwrite=firstFileInDirectory)
+                '''
+                we want to only overwrite the asm output file if
+                'firstFileInDirectory' is true. coincidentally
+                setting it equal to the {overwrite} flag works out
+                
+                but now we overwrite when writing bootstrap code so we no 
+                longer need to worry about it
+                '''
+                translate(readPath, outputPath, False)
+                # overwrite=firstFileInDirectory)
+
 
                 firstFileInDirectory = False
 

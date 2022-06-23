@@ -58,6 +58,43 @@ class CodeWriter:
 
     # noinspection PyMethodMayBeStatic
     def writeBootstrap(self):
+        """
+        set SP to 256 and LCL, ARG, THIS, THAT to -1, -2, -3, -4
+
+        @256
+        D=A
+        @SP
+        M=D
+
+        @1
+        D=-A
+        @LCL
+        M=D
+
+        @2
+        D=-A
+        @ARG
+        M=D
+
+        @3
+        D=-A
+        @THIS
+        M=D
+
+        @3
+        D=-A
+        @THAT
+        M=D
+
+        memSegs = ['LCL', 'ARG', 'THIS', 'THAT']
+        for index in range(1,5):
+            @i
+            D=-A
+            @memSegs[i]
+            M=D
+
+        :return:
+        """
         setSLATT = [
             '',
             ''
