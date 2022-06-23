@@ -141,27 +141,42 @@ def main(absPath: str) -> None:
         print('\n')
 
         # detect .vm files in this directory
-        # we should overwrite if this is the first time we're in a directory
-        #   but append for all following files
 
-        # save directory root
+        # save directory root, which always contains a slash at the end?
         root = absPath
-        # print(f 'root → {root}')
+        print(f'root → {root}')
 
-        # folder name, not path
+        # basename is the name of the directory, e.g.
+        # c:/Dropbox/StaticTest/ → StaticTest
         basename = os.path.basename(os.path.dirname(absPath))
-        # print(f 'dirname → {basename}\n')
+        print(f'os.path.dirname(absPath) → {os.path.dirname(absPath)}')
+        print(f'dirname → {basename}\n')
 
         outputPath = root+basename+".asm"
         # print(f 'output path → {outputPath}')
 
+
+        # TODO → write bootstrap code here and use codeWriter.writeBootstrap
+        #   TODO → set SLATT, call Sys.init 0
+        #   TODO → pass fileName into codeWriter
+
+        # overwrite .asm output if this is the first time we're in a directory,
+        # but append for all following files
+        firstFileInDirectory: bool = True
         for file in os.listdir(absPath):
             if file.lower().endswith('.vm'):  # 'file' is a VM file
                 readPath = root+file
                 # print( f'📃 translating: {readPath}')
+
                 translate(readPath,
                           outputPath,
-                          overwrite=False)
+                          # we want to only overwrite the asm output file if
+                          # 'firstFileInDirectory' is true. coincidentally
+                          # setting it equal to the {overwrite} flag works out
+                          overwrite=firstFileInDirectory)
+
+                firstFileInDirectory = False
+
     else:
         raise ValueError(f'{absPath} does not seem to be a file or directory')
 
@@ -175,8 +190,8 @@ def main(absPath: str) -> None:
 #            'MemoryAccess/BasicTest/BasicTest.vm'
 
 # directories must end with an {os.sep}, which is in this case a '/'
-filename = 'C:/Dropbox/code/nand2tetris/kiwi/nand2tetris/projects/07/' \
-           'MemoryAccess/StaticTest/'
+filename = 'C:/Dropbox/code/nand2tetris/kiwi/nand2tetris/projects/08/' \
+           'FunctionCalls/NestedCall/'
 
 main(filename)
 
