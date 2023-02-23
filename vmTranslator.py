@@ -205,8 +205,9 @@ def main(path: str) -> None:
 # filename = 'C:/Dropbox/code/nand2tetris/kiwi/nand2tetris/projects/08/' \
 #            'FunctionCalls/NestedCall/Sys.vm'
 
-filename = 'C:/Dropbox/code/nand2tetris/kiwi/nand2tetris/projects/08/' \
-           'FunctionCalls/StaticsTest/'
+# filename = 'C:/Users/kiwi/Dropbox/code/nand2tetris/kiwi/nand2tetris/projects/08/' \
+#            'FunctionCalls/StaticsTest/'
+filename = 'test/directoryTest/StaticTest.vm'
 
 main(filename)
 
