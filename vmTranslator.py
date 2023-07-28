@@ -97,6 +97,18 @@ def main(path: str) -> None:
                 parser reads all .vm files in vmFileList
                 while codeWriter writes each one to loc.asm
 
+    TODO it looks like this may require absolute paths
+        look at this snippet below from py-codeGenerator to improve this code:
+
+        for path in pathlib.Path(path).iterdir():
+            if str(path).endswith('.jack'):
+                stem: str = path.stem
+                xmlOutputPath: str = str(path.parent) + os.sep + stem + '.xml'
+                vmOutputPath: str = str(path.parent) + os.sep + stem + '.vm'
+
+                print(f'🥝[ COMPILE! ] {path}')
+                # compileSingleFile(str(path), xmlOutputPath, vmOutputPath)
+
     :param path:
     :return:
     """

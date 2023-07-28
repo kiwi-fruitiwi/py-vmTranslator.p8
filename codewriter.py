@@ -283,10 +283,16 @@ class CodeWriter:
             'M=D'
         ]
 
+        # jump to the function in memory and add a label for the return address
+        # we jump to this return address after. the function is already compiled
+        # at a previous ram location.
+        # we've already pushed the
         end: [str] = [  # goto functionName, set returnAddress label
-            f'@{fName}',  # todo this will need a filename later
+            # note the function name is always unique unless it's in a dif. file
+            # TODO this will need a filename later
+            f'@{fName}',
             '0;JMP',
-            f'(retAddr_{self.retAddrCounter})'
+            f'(retAddr_{self.retAddrCounter})' # unique return label
         ]
 
         results.extend(header)
@@ -448,7 +454,7 @@ class CodeWriter:
         loops: int = nVars  # how many times are we executing 'push 0'?
         results: [str] = [
             '// [ VM COMMAND ] ' + command,
-            f'({fName})'
+            f'({fName})' # this is a label!
         ]
 
         for index in range(loops):
@@ -840,7 +846,7 @@ class CodeWriter:
     def __writePushPointer(self, command: str, n: int) -> [str]:
         results = [
             # given: 'pointer 0' is THIS. 'pointer 1' is THAT. n∈[0,1]
-            # conveniently we can use i+3 since THIs is at index 3 while THAT
+            # conveniently we can use i+3 since THIS is at index 3 while THAT
             # is at index 4
             '// [ VM COMMAND ] ' + command,
             '@'+str(n+3),
@@ -859,7 +865,7 @@ class CodeWriter:
     def __writePopPointer(self, command: str, n: int) -> [str]:
         results = [
             # given: 'pointer 0' is THIS. 'pointer 1' is THAT. n∈[0,1]
-            # conveniently we can use i+3 since THIs is at index 3 while THAT
+            # conveniently we can use i+3 since THIS is at index 3 while THAT
             # is at index 4
             '// [ VM COMMAND ] ' + command,
             '@SP',
